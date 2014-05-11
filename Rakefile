@@ -39,6 +39,11 @@ spec = Gem::Specification.new do |s|
 	s.files        = File.read( __FILE__ ).split( /^__END__/, 2 ).last.split
 	#s.executables  = %w[]
 	s.description  = <<-EOF
+A small collection of base classes used for interacting with remote
+machines over ssh.  With them, you can use AMQP (via Symphony) to
+run batch commands, execute templates as scripts, and perform any
+batch/remoting stuff you can think of without the need of separate
+client agents.
 	EOF
 	s.required_rubygems_version = '>= 2.0.3'
 	s.required_ruby_version = '>= 2.0.0'
