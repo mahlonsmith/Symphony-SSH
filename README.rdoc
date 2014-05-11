@@ -68,7 +68,7 @@ exposed if you have very specific needs and you know what you're doing.
 == Contributing
 
 You can check out the current development source with Mercurial via its
-{project page}[http://bitbucket.org/mahlon/symphony-metronome]. 
+{project page}[http://bitbucket.org/mahlon/symphony-ssh]. 
 
 After checking out the source, run:
 
