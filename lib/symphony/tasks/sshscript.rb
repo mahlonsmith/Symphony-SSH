@@ -90,7 +90,7 @@ class Symphony::Task::SSHScript < Symphony::Task
 	### Configurability API.
 	###
 	def self::configure( config=nil )
-		config = self.defaults.merge( config || {} )
+		config = Symphony::Task::SSHScript.defaults.merge( config || {} )
 		@user = config.delete( :user )
 		@key  = config.delete( :key )
 		super

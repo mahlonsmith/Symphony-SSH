@@ -88,7 +88,7 @@ class Symphony::Task::SSH < Symphony::Task
 	### Configurability API.
 	###
 	def self::configure( config=nil )
-		config = self.defaults.merge( config || {} )
+		config = Symphony::Task::SSH.defaults.merge( config || {} )
 		@path  = config.delete( :path )
 		@opts  = config.delete( :opts )
 		@user  = config.delete( :user )
