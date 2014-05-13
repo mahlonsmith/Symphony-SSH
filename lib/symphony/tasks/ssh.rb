@@ -149,7 +149,7 @@ class Symphony::Task::SSH < Symphony::Task
 		parent_reader, child_writer = IO.pipe
 		child_reader, parent_writer = IO.pipe
 
-		pid = spawn( *cmd, :out => child_writer, :in => child_reader, :close_others => true )
+		pid = Process.spawn( *cmd, :out => child_writer, :in => child_reader, :close_others => true )
 		child_writer.close
 		child_reader.close
 

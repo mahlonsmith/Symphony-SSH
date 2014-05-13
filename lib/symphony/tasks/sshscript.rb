@@ -108,7 +108,7 @@ class Symphony::Task::SSHScript < Symphony::Task
 		key        = payload[ 'key'  ]    || Symphony::Task::SSHScript.key
 		nocleanup  = payload[ 'nocleanup' ]
 
-		raise ArgumentError, "Missing required option 'command'" unless template
+		raise ArgumentError, "Missing required option 'template'" unless template
 		raise ArgumentError, "Missing required option 'host'"    unless payload[ 'host' ]
 
 		remote_filename = self.make_remote_filename( template )

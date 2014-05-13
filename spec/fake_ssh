@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+#
+# Rather than mocking out all of spawn() and its pipes, test end-to-end.
+
+print <<-EOF
+Warning: no access to tty;
+Thus no job control in this shell.
+Hi there!
+EOF
+
+exit 0
+
