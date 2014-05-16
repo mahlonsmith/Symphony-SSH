@@ -158,7 +158,10 @@ class Symphony::Task::SSH < Symphony::Task
 		@output = @output.split("\n").reject{|l| l =~ SSH_CLEANUP }.join
 		self.log.debug "  run block done."
 
-		pid, status = Process.waitpid2( pid )
+		status = nil
+
+	ensure
+		pid, status = Process.waitpid2( pid ) if pid
 		return status
 	end
 
