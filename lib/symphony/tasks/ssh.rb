@@ -161,7 +161,10 @@ class Symphony::Task::SSH < Symphony::Task
 		status = nil
 
 	ensure
-		pid, status = Process.waitpid2( pid ) if pid
+		if pid
+			Process.kill( :TERM, pid )
+			pid, status = Process.waitpid2( pid )
+		end
 		return status
 	end
 
