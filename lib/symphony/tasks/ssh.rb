@@ -137,7 +137,7 @@ class Symphony::Task::SSH < Symphony::Task
 
 		cmd = []
 		cmd << Symphony::Task::SSH.path
-		cmd += Symphony::Task::SSH.opts
+		cmd += opts
 
 		cmd << '-p' << port.to_s
 		cmd << '-i' << key if key
@@ -162,7 +162,8 @@ class Symphony::Task::SSH < Symphony::Task
 
 	ensure
 		if pid
-			Process.kill( :TERM, pid )
+			active = Process.kill( 0, pid ) rescue false
+			Process.kill( :TERM, pid ) if active
 			pid, status = Process.waitpid2( pid )
 		end
 		return status
