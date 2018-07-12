@@ -1,12 +1,13 @@
 #!/usr/bin/env ruby
 # vim: set nosta noet ts=4 sw=4:
 
+require 'securerandom'
 require 'net/ssh'
 require 'net/sftp'
-require 'tmpdir'
 require 'inversion'
 require 'symphony'
 require 'symphony/task'
+require 'symphony/tasks/ssh'
 
 
 ### A base class for connecting to a remote host, then uploading and
@@ -26,9 +27,10 @@ require 'symphony/task'
 ###    key:        (optional) The path to an SSH private key
 ###    attributes: (optional) Additional data to attach to the template
 ###    nocleanup:  (optional) Leave the remote script after execution? (default to false)
+###    tempdir:    (optional) The destination temp directory.  (defaults to /tmp)
 ###
 ###
-### Additionally, this class responds to the 'symphony_ssh' configurability
+### Additionally, this class responds to the 'symphony.ssh' configurability
 ### key.  Currently, you can override the default ssh user and private key.
 ###
 ### Textual output of the command is stored in the @output instance variable.
@@ -49,52 +51,26 @@ require 'symphony/task'
 ###    end
 ###
 class Symphony::Task::SSHScript < Symphony::Task
-	extend Configurability
-	config_key :symphony_ssh
 
 	# Template config
 	#
 	TEMPLATE_OPTS = {
-		:ignore_unknown_tags => false,
-		:on_render_error     => :propagate,
-		:strip_tag_lines     => true
+		ignore_unknown_tags: false,
+		on_render_error:     :propagate,
+		strip_tag_lines:     true
 	}
 
 	# The defaults to use when connecting via SSH
 	#
 	DEFAULT_SSH_OPTIONS = {
-		:auth_methods            => [ 'publickey' ],
-		:compression             => true,
-		:config                  => false,
-		:keys_only               => true,
-		:paranoid                => false,
-		:global_known_hosts_file => '/dev/null',
-		:user_known_hosts_file   => '/dev/null'
+		auth_methods:            [ 'publickey' ],
+		compression:             true,
+		config:                  false,
+		keys_only:               true,
+		verify_host_key:         :never,
+		global_known_hosts_file: '/dev/null',
+		user_known_hosts_file:   '/dev/null'
 	}
-
-	# SSH default options.
-	#
-	CONFIG_DEFAULTS = {
-		:user => 'root',
-		:key  => nil
-	}
-
-	class << self
-		# The default user to use when connecting.  If unset, 'root' is used.
-		attr_reader :user
-
-		# An absolute path to a password-free ssh private key.
-		attr_reader :key
-	end
-
-	### Configurability API.
-	###
-	def self::configure( config=nil )
-		config = Symphony::Task::SSHScript.defaults.merge( config || {} )
-		@user = config.delete( :user )
-		@key  = config.delete( :key )
-		super
-	end
 
 
 	### Perform the ssh connection, render the template, send it, and
@@ -104,20 +80,21 @@ class Symphony::Task::SSHScript < Symphony::Task
 		template   = payload[ 'template' ]
 		attributes = payload[ 'attributes' ] || {}
 		port       = payload[ 'port' ]    || 22
-		user       = payload[ 'user' ]    || Symphony::Task::SSHScript.user
-		key        = payload[ 'key'  ]    || Symphony::Task::SSHScript.key
+		user       = payload[ 'user' ]    || Symphony::Task::SSH.user
+		key        = payload[ 'key'  ]    || Symphony::Task::SSH.key
 		nocleanup  = payload[ 'nocleanup' ]
+		tempdir    = payload[ 'tempdir' ] || '/tmp'
 
 		raise ArgumentError, "Missing required option 'template'" unless template
-		raise ArgumentError, "Missing required option 'host'"    unless payload[ 'host' ]
+		raise ArgumentError, "Missing required option 'host'"     unless payload[ 'host' ]
 
-		remote_filename = self.make_remote_filename( template )
+		remote_filename = self.make_remote_filename( template, tempdir )
 		source = self.generate_script( template, attributes )
 
-		ssh_options = DEFAULT_SSH_OPTIONS.merge( :port => port, :keys => [key] )
+		ssh_options = DEFAULT_SSH_OPTIONS.merge( port: port, keys: Array(key) )
 		ssh_options.merge!(
-			:logger  => Loggability[ Net::SSH ],
-			:verbose => :debug
+			logger: Loggability[ Net::SSH ],
+			verbose: :debug
 		) if payload[ 'debug' ]
 
 		Net::SSH.start( payload['host'], user, ssh_options ) do |conn|
@@ -141,11 +118,15 @@ class Symphony::Task::SSHScript < Symphony::Task
 	### Generate a unique filename for the script on the remote host,
 	### based on +template+ name.
 	###
-	def make_remote_filename( template )
+	def make_remote_filename( template, tempdir="/tmp" )
 		basename = File.basename( template, File.extname(template) )
-		tmpname  = Dir::Tmpname.make_tmpname( basename, rand(10000) )
+		tmpname  = "%s/%s-%s" % [
+			tempdir,
+			basename,
+			SecureRandom.hex( 6 )
+		]
 
-		return "/tmp/#{tmpname}"
+		return tmpname
 	end
 
 

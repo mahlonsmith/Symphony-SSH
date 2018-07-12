@@ -1,0 +1,8 @@
+configurability -v3.2.0
+symphony -v0.11.1
+inversion -v1.1.1
+net-ssh -v5.0.2
+net-sftp -v2.1.2
+rspec -v3.7.0
+simplecov -v0.16.1
+pry -v0.11.3

@@ -1,17 +1,30 @@
 
 require_relative '../../helpers'
+require 'symphony/tasks/ssh'
 require 'symphony/tasks/sshscript'
 
 context Symphony::Task::SSHScript do
 
 	before( :each ) do
-		described_class.configure(
+		Symphony::Task::SSH.configure(
 			key:  '/tmp/sekrit.rsa',
 			user: 'symphony'
 		)
 	end
 
-	it_should_behave_like "an object with Configurability"
+
+	describe 'utility' do
+
+		it "can generate an appropriate tempfile name" do
+			instance = Class.new( described_class ).new( 'queue' )
+			tmpname = instance.send( :make_remote_filename, "fancy-script.tmpl" )
+			expect( tmpname ).to match( %r|^/tmp/fancy-script-[[:xdigit:]]{6}| )
+
+			tmpname = instance.send( :make_remote_filename, "fancy-script.tmpl", "/var/tmp" )
+			expect( tmpname ).to match( %r|/var/tmp/fancy-script-[[:xdigit:]]{6}| )
+		end
+	end
+
 
 	describe 'subclassed' do
 		let( :instance ) { Class.new(described_class).new('queue') }
@@ -30,7 +43,7 @@ context Symphony::Task::SSHScript do
 
 		before( :each ) do
 			allow( Inversion::Template ).to receive( :load ).and_return( template )
-			allow( Dir::Tmpname ).to receive( :make_tmpname ).and_return( "script_temp" )
+			allow( instance ).to receive( :make_remote_filename ).and_return( "/tmp/script_temp" )
 		end
 
 		it "aborts if there is no template in the payload" do

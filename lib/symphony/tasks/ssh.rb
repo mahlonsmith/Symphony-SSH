@@ -23,7 +23,7 @@ require 'symphony/task' unless defined?( Symphony::Task )
 ###    key:     (optional) The path to an SSH private key
 ###
 ###
-### Additionally, this class responds to the 'symphony_ssh' configurability
+### Additionally, this class responds to the 'symphony.ssh' configurability
 ### key.  Currently, you can set the 'path' argument, which is the
 ### full path to the local ssh binary (defaults to '/usr/bin/ssh') and
 ### override the default ssh user, key, and client opts.
@@ -47,53 +47,42 @@ require 'symphony/task' unless defined?( Symphony::Task )
 ###
 class Symphony::Task::SSH < Symphony::Task
 	extend Configurability
-	config_key :symphony_ssh
 
-	# SSH default options.
+	# The default set of ssh command line flags.
 	#
-	CONFIG_DEFAULTS = {
-		:path => '/usr/bin/ssh',
-		:opts => [
-			'-e', 'none',
-			'-T',
-			'-x',
-			'-q',
-			'-o', 'CheckHostIP=no',
-			'-o', 'BatchMode=yes',
-			'-o', 'StrictHostKeyChecking=no'
-		],
-		:user => 'root',
-		:key  => nil
-	}
+	DEFAULT_SSH_OPTS = %w[
+			-e none
+			-T
+			-x
+			-q
+			-o CheckHostIP=no
+			-o BatchMode=yes
+			-o StrictHostKeyChecking=no
+	]
 
 	# SSH "informative" stdout output that should be cleaned from the
 	# command output.
 	SSH_CLEANUP = %r/Warning: no access to tty|Thus no job control in this shell/
 
-	class << self
+
+	# Configurability API
+	#
+	configurability( :symphony__ssh ) do
+
 		# The full path to the ssh binary.
-		attr_reader :path
+		setting :path, default: '/usr/bin/ssh'
 
-		# A default set of ssh client options when connecting
+		# The default user to use when connecting.
+		setting :user, default: 'root'
+
+		# A default Array of ssh client options when connecting
 		# to remote hosts.
-		attr_reader :opts
-
-		# The default user to use when connecting.  If unset, 'root' is used.
-		attr_reader :user
+		setting :opts, default: DEFAULT_SSH_OPTS do |val|
+			Array( val )
+		end
 
 		# An absolute path to a password-free ssh private key.
-		attr_reader :key
-	end
-
-	### Configurability API.
-	###
-	def self::configure( config=nil )
-		config = Symphony::Task::SSH.defaults.merge( config || {} )
-		@path  = config.delete( :path )
-		@opts  = config.delete( :opts )
-		@user  = config.delete( :user )
-		@key   = config.delete( :key )
-		super
+		setting :key
 	end
 
 
