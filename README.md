@@ -1,6 +1,6 @@
 
 symphony-ssh
-############
+============
 
 Description
 ------------
@@ -22,8 +22,8 @@ Options
 -------
 
 Symphony-ssh uses
-Configurability[https://rubygems.org/gems/configurability] to determine
-behavior.  The configuration is a YAML[http://www.yaml.org/] file. 
+[Configurability](https://rubygems.org/gems/configurability) to determine
+behavior.  The configuration is a [YAML](http://www.yaml.org/) file. 
 
     symphony:
         ssh:
