@@ -1,7 +1,9 @@
 
-= symphony-ssh
+symphony-ssh
+############
 
-== Description
+Description
+------------
 
 This is a small collection of base classes used for interacting with
 remote machines over ssh.  With them, you can use AMQP (via Symphony) to
@@ -16,7 +18,8 @@ to be used directly.  Subclass them!
 See the rdoc for additional information and examples.
 
 
-== Options
+Options
+-------
 
 Symphony-ssh uses
 Configurability[https://rubygems.org/gems/configurability] to determine
@@ -44,35 +47,40 @@ Configurability path has changed from `symphony_ssh`, to an `ssh` key
 under the `symphony` top level.
 
 
-=== path
+### path
 
 The absolute path to the ssh binary.
 
-=== user
+### user
 
 The default user to connect to remote hosts with.  This can be
 changed per connection in the AMQP payload.
 
-=== key
+### key
 
 An absolute path to a password-less ssh private key.
 
-=== opts
+### opts
 
 SSH client options, passed to the ssh binary on the command line.  Note
 that the defaults have been tested fairly extensively, these are just
 exposed if you have very specific needs and you know what you're doing.
 
 
-== Installation
+Installation
+-------------
 
     gem install symphony-ssh
 
 
-== Contributing
+Contributing
+------------
 
-You can check out the current development source with Mercurial via its
-{project page}[http://bitbucket.org/mahlon/symphony-ssh]. 
+You can check out the current development source with Mercurial
+[here](http://code.martini.nu/symphony-ssh), or via a mirror:
+
+ * github: https://github.com/mahlonsmith/Symphony-SSH
+ * SourceHut: https://hg.sr.ht/~mahlon/Symphony-SSH
 
 After checking out the source, run:
 
@@ -84,7 +92,8 @@ If you use {rvm}[http://rvm.io/], entering the project directory will
 install any required development dependencies.
 
 
-== License
+License
+-------
 
 Copyright (c) 2014-2018, Mahlon E. Smith and Michael Granger
 All rights reserved.
