@@ -31,7 +31,7 @@ spec = Gem::Specification.new do |s|
 	s.platform     = Gem::Platform::RUBY
 	s.summary      = "Base classes for using Symphony with ssh."
 	s.name         = 'symphony-ssh'
-	s.version      = '0.2.0'
+	s.version      = '0.2.1'
 	s.license      = 'BSD-3-Clause'
 	s.has_rdoc     = true
 	s.require_path = 'lib'
@@ -45,12 +45,11 @@ run batch commands, execute templates as scripts, and perform any
 batch/remoting stuff you can think of without the need of separate
 client agents.
 	EOF
-	s.required_rubygems_version = '>= 2.0.3'
-	s.required_ruby_version = '>= 2.0.0'
+	s.required_ruby_version = '>= 2.6.0'
 
-	s.add_dependency 'configurability', '~> 3.2'
-	s.add_dependency 'symphony', '~> 0.11'
-	s.add_dependency 'inversion', '~> 1.1'
+	s.add_dependency 'configurability', [ '>= 3.2', '<= 4.99' ]
+	s.add_dependency 'symphony', '~> 0.13'
+	s.add_dependency 'inversion', '~> 1.2'
 	s.add_dependency 'net-ssh', '~> 5.0'
 	s.add_dependency 'net-sftp', '~> 2.1'
 
