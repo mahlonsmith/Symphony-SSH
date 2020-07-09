@@ -31,7 +31,7 @@ spec = Gem::Specification.new do |s|
 	s.platform     = Gem::Platform::RUBY
 	s.summary      = "Base classes for using Symphony with ssh."
 	s.name         = 'symphony-ssh'
-	s.version      = '0.2.1'
+	s.version      = '0.3.0'
 	s.license      = 'BSD-3-Clause'
 	s.has_rdoc     = true
 	s.require_path = 'lib'
@@ -49,12 +49,12 @@ client agents.
 
 	s.add_dependency 'configurability', [ '>= 3.2', '<= 4.99' ]
 	s.add_dependency 'symphony', '~> 0.13'
-	s.add_dependency 'inversion', '~> 1.2'
-	s.add_dependency 'net-ssh', '~> 5.0'
-	s.add_dependency 'net-sftp', '~> 2.1'
+	s.add_dependency 'inversion', '~> 1.3'
+	s.add_dependency 'net-ssh', '~> 6.0'
+	s.add_dependency 'net-sftp', '~> 3.0'
 
-	s.add_development_dependency 'rspec',     '~> 3.7'
-	s.add_development_dependency 'simplecov', '~> 0.16'
+	s.add_development_dependency 'rspec',     '~> 3.9'
+	s.add_development_dependency 'simplecov', '~> 0.18'
 end
 
 Gem::PackageTask.new( spec ) do |pkg|
@@ -119,4 +119,3 @@ end
 __END__
 lib/symphony/tasks/ssh.rb
 lib/symphony/tasks/sshscript.rb
-README.rdoc

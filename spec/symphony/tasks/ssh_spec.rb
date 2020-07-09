@@ -38,12 +38,12 @@ context Symphony::Task::SSH do
 			allow( IO ).to receive( :pipe ).and_return([ pipe, pipe ])
 
 			args = [
-				'-p', '22', '-i', '/tmp/sekrit.rsa', '-l', 'symphony', 'example.com'
+				'-p', '22', '-i', '/tmp/sekrit.rsa', '-l', 'symphony', 'example.com', 'woohoo'
 			]
 
 			expect( Process ).to receive( :spawn ).with(
-				*[ ssh.to_s, described_class.opts, args ].flatten,
-				:out => pipe, :in => pipe, :close_others => true
+				*[ {}, ssh.to_s, described_class.opts, args ].flatten,
+				out: pipe, in: pipe, close_others: true, unsetenv_others: true
 			).and_return( 12 )
 
 			expect( Process ).to receive( :waitpid2 ).with( 12 ).and_return([ 12, 1 ])

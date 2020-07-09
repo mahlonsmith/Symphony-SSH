@@ -19,6 +19,7 @@ require 'symphony/task' unless defined?( Symphony::Task )
 ###    command: (required) The command to run on the remote host
 ###    port:    (optional) The port to connect to (defaults to 22)
 ###    opts:    (optional) Explicit SSH client options
+###    env:     (optional) A hash of environment vars to set for the connection.
 ###    user:    (optional) The user to connect as (defaults to root)
 ###    key:     (optional) The path to an SSH private key
 ###
@@ -86,17 +87,16 @@ class Symphony::Task::SSH < Symphony::Task
 	end
 
 
-	### Perform the ssh connection, passing the command to the pipe
-	### and retreiving any output from the remote end.
+	### Perform the ssh connection in 'exec' mode, and retrieve any
+	### output from the remote end.
 	###
 	def work( payload, metadata )
-		command = payload[ 'command' ]
-		raise ArgumentError, "Missing required option 'command'" unless command
+		raise ArgumentError, "Missing required option 'command'" unless payload[ 'command' ]
 		raise ArgumentError, "Missing required option 'host'"    unless payload[ 'host' ]
 
 		exitcode = self.open_connection( payload, metadata ) do |reader, writer|
-			self.log.debug "Writing command #{command}..."
-			writer.puts( command )
+			#self.log.debug "Writing command #{command}..."
+			#writer.puts( command )
 			self.log.debug "  closing child's writer."
 			writer.close
 			self.log.debug "  reading from child."
@@ -123,6 +123,7 @@ class Symphony::Task::SSH < Symphony::Task
 		opts = payload[ 'opts' ] || Symphony::Task::SSH.opts
 		user = payload[ 'user' ] || Symphony::Task::SSH.user
 		key  = payload[ 'key'  ] || Symphony::Task::SSH.key
+		env  = payload[ 'env'  ] || {}
 
 		cmd = []
 		cmd << Symphony::Task::SSH.path
@@ -132,23 +133,30 @@ class Symphony::Task::SSH < Symphony::Task
 		cmd << '-i' << key if key
 		cmd << '-l' << user
 		cmd << payload[ 'host' ]
+		cmd << payload[ 'command' ]
 		cmd.flatten!
 		self.log.debug "Running SSH command with: %p" % [ Shellwords.shelljoin(cmd) ]
 
 		parent_reader, child_writer = IO.pipe
 		child_reader, parent_writer = IO.pipe
 
-		pid = Process.spawn( *cmd, :out => child_writer, :in => child_reader, :close_others => true )
+		pid = Process.spawn( env, *cmd,
+			out:             child_writer,
+			in:              child_reader,
+			close_others:    true,
+			unsetenv_others: true
+		)
+
 		child_writer.close
 		child_reader.close
 
 		self.log.debug "Yielding back to the run block."
 		@output = yield( parent_reader, parent_writer )
-		@output = @output.split("\n").reject{|l| l =~ SSH_CLEANUP }.join
+		@output = @output.split( /\r?\n/ ).reject{|l| l =~ SSH_CLEANUP }.join
 		self.log.debug "  run block done."
 
-		status = nil
-
+	rescue => err
+		self.log.error( err.message )
 	ensure
 		if pid
 			active = Process.kill( 0, pid ) rescue false

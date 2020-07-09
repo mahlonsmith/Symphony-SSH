@@ -7,4 +7,5 @@ pkg/
 ^ChangeLog$
 ^docs/
 ^coverage/
+^gem.deps.rb.lock$
 Session.vim
