@@ -20,8 +20,11 @@ context Symphony::Task::SSHScript do
 			tmpname = instance.send( :make_remote_filename, "fancy-script.tmpl" )
 			expect( tmpname ).to match( %r|^/tmp/fancy-script-[[:xdigit:]]{6}| )
 
-			tmpname = instance.send( :make_remote_filename, "fancy-script.tmpl", "/var/tmp" )
+			tmpname = instance.send( :make_remote_filename, "fancy-script.tmpl", "/var/tmp/" )
 			expect( tmpname ).to match( %r|/var/tmp/fancy-script-[[:xdigit:]]{6}| )
+
+			tmpname = instance.send( :make_remote_filename, "fancy-script.tmpl", '' )
+			expect( tmpname ).to match( %r|fancy-script-[[:xdigit:]]{6}| )
 		end
 	end
 
@@ -100,6 +103,36 @@ context Symphony::Task::SSHScript do
 			expect( fh ).to receive( :print ).with( "Hi there, !" )
 
 			expect( conn ).to receive( :exec! ).with( "/tmp/script_temp" )
+			expect( conn ).to receive( :exec! ).with( "rm /tmp/script_temp" )
+
+			expect( Net::SSH ).to receive( :start ).
+				with( 'example.com', 'symphony', opts ).and_yield( conn )
+
+			instance.work( payload, {} )
+		end
+
+		it "can override how it cleans the remote script up" do
+			payload[ 'delete_cmd' ] = 'del'
+
+			conn = double( :ssh_connection )
+			expect( instance ).to receive( :upload_script ).
+				with( conn, "Hi there, !", "/tmp/script_temp" )
+			expect( conn ).to receive( :exec! ).with( "/tmp/script_temp" )
+			expect( conn ).to receive( :exec! ).with( "del /tmp/script_temp" )
+
+			expect( Net::SSH ).to receive( :start ).
+				with( 'example.com', 'symphony', opts ).and_yield( conn )
+
+			instance.work( payload, {} )
+		end
+
+		it "can run the script with a specific interpreter" do
+			payload[ 'run_binary' ] = 'ruby'
+
+			conn = double( :ssh_connection )
+			expect( instance ).to receive( :upload_script ).
+				with( conn, "Hi there, !", "/tmp/script_temp" )
+			expect( conn ).to receive( :exec! ).with( "ruby /tmp/script_temp" )
 			expect( conn ).to receive( :exec! ).with( "rm /tmp/script_temp" )
 
 			expect( Net::SSH ).to receive( :start ).

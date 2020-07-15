@@ -27,7 +27,9 @@ require 'symphony/tasks/ssh'
 ###    key:        (optional) The path to an SSH private key
 ###    attributes: (optional) Additional data to attach to the template
 ###    nocleanup:  (optional) Leave the remote script after execution? (default to false)
-###    tempdir:    (optional) The destination temp directory.  (defaults to /tmp)
+###    delete_cmd: (optional) The command to delete the remote script.  (default to 'rm')
+###    run_binary: (optional) Windows doesn't allow direct execution of scripts, this is prefixed to the remote command if present.
+###    tempdir:    (optional) The destination temp directory.  (defaults to /tmp/, needs to include the separator character)
 ###
 ###
 ### Additionally, this class responds to the 'symphony.ssh' configurability
@@ -79,11 +81,9 @@ class Symphony::Task::SSHScript < Symphony::Task
 	def work( payload, metadata )
 		template   = payload[ 'template' ]
 		attributes = payload[ 'attributes' ] || {}
-		port       = payload[ 'port' ]    || 22
 		user       = payload[ 'user' ]    || Symphony::Task::SSH.user
 		key        = payload[ 'key'  ]    || Symphony::Task::SSH.key
-		nocleanup  = payload[ 'nocleanup' ]
-		tempdir    = payload[ 'tempdir' ] || '/tmp'
+		tempdir    = payload[ 'tempdir' ] || '/tmp/'
 
 		raise ArgumentError, "Missing required option 'template'" unless template
 		raise ArgumentError, "Missing required option 'host'"     unless payload[ 'host' ]
@@ -91,7 +91,17 @@ class Symphony::Task::SSHScript < Symphony::Task
 		remote_filename = self.make_remote_filename( template, tempdir )
 		source = self.generate_script( template, attributes )
 
-		ssh_options = DEFAULT_SSH_OPTIONS.merge( port: port, keys: Array(key) )
+		# Map any configuration parameters in the payload to ssh
+		# options, for potential per-message behavior overrides.
+		ssh_opts_override = payload.
+			slice( *DEFAULT_SSH_OPTIONS.keys.map( &:to_s ) ).
+			transform_keys{|k| k.to_sym }
+
+		ssh_options = DEFAULT_SSH_OPTIONS.dup.merge!(
+			ssh_opts_override,
+			port: payload[ 'port' ] || 22,
+			keys: Array( key )
+		)
 		ssh_options.merge!(
 			logger: Loggability[ Net::SSH ],
 			verbose: :debug
@@ -103,7 +113,7 @@ class Symphony::Task::SSHScript < Symphony::Task
 			self.upload_script( conn, source, remote_filename )
 			self.log.debug "  done with the upload."
 
-			self.run_script( conn, remote_filename, nocleanup )
+			self.run_script( conn, remote_filename, payload )
 			self.log.debug "Output was:\n#{@output}"
 		end
 
@@ -118,9 +128,9 @@ class Symphony::Task::SSHScript < Symphony::Task
 	### Generate a unique filename for the script on the remote host,
 	### based on +template+ name.
 	###
-	def make_remote_filename( template, tempdir="/tmp" )
+	def make_remote_filename( template, tempdir="/tmp/" )
 		basename = File.basename( template, File.extname(template) )
-		tmpname  = "%s/%s-%s" % [
+		tmpname  = "%s%s-%s" % [
 			tempdir,
 			basename,
 			SecureRandom.hex( 6 )
@@ -153,11 +163,16 @@ class Symphony::Task::SSHScript < Symphony::Task
 
 
 	### Run the +remote_filename+ via the ssh +conn+.  The script
-	### will be deleted automatically unless +nocleanup+ is true.
+	### will be deleted automatically unless +nocleanup+ is set
+	### in the payload.
 	###
-	def run_script( conn, remote_filename, nocleanup=false )
-		@output = conn.exec!( remote_filename )
-		conn.exec!( "rm #{remote_filename}" ) unless nocleanup
+	def run_script( conn, remote_filename, payload )
+		delete_cmd = payload[ 'delete_cmd' ] || 'rm'
+		command    = remote_filename
+		command    = "%s %s" % [ payload['run_binary'], remote_filename ] if payload[ 'run_binary' ]
+
+		@output = conn.exec!( command )
+		conn.exec!( "#{delete_cmd} #{remote_filename}" ) unless payload[ 'nocleanup' ]
 	end
 
 end # Symphony::Task::SSHScript
